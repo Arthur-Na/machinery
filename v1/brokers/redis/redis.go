@@ -216,6 +216,41 @@ func (b *Broker) Publish(ctx context.Context, signature *tasks.Signature) error 
 	return err
 }
 
+// GetPendingTasksCount returns a number of task signatures waiting in the queue
+func (b *Broker) GetPendingTasksCount(queue string) (int64, error) {
+	conn := b.open()
+	defer conn.Close()
+
+	if queue == "" {
+		queue = b.GetConfig().DefaultQueue
+	}
+	dataBytes, err := conn.Do("LLEN", queue)
+	if err != nil {
+		return 0, err
+	}
+	results, err := redis.Int64(dataBytes, err)
+	if err != nil {
+		return 0, err
+	}
+	return results, nil
+}
+
+// GetDelayedTasksCount returns the number of tasks that are scheduled, but not yet in the queue
+func (b *Broker) GetDelayedTasksCount() (int64, error) {
+	conn := b.open()
+	defer conn.Close()
+
+	dataBytes, err := conn.Do("ZCARD", b.redisDelayedTasksKey)
+	if err != nil {
+		return 0, err
+	}
+	results, err := redis.Int64(dataBytes, err)
+	if err != nil {
+		return 0, err
+	}
+	return results, err
+}
+
 // GetPendingTasks returns a slice of task signatures waiting in the queue
 func (b *Broker) GetPendingTasks(queue string) ([]*tasks.Signature, error) {
 	conn := b.open()

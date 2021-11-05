@@ -85,6 +85,14 @@ func (b *Broker) IsTaskRegistered(name string) bool {
 	return false
 }
 
+func (b *Broker) GetPendingTasksCount(queue string) (int64, error) {
+	return 0, errors.New("Not implemented")
+}
+
+func (b *Broker) GetDelayedTasksCount() (int64, error) {
+	return 0, errors.New("Not implemented")
+}
+
 // GetPendingTasks returns a slice of task.Signatures waiting in the queue
 func (b *Broker) GetPendingTasks(queue string) ([]*tasks.Signature, error) {
 	return nil, errors.New("Not implemented")

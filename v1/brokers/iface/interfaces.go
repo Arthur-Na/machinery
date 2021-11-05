@@ -15,6 +15,8 @@ type Broker interface {
 	StartConsuming(consumerTag string, concurrency int, p TaskProcessor) (bool, error)
 	StopConsuming()
 	Publish(ctx context.Context, task *tasks.Signature) error
+	GetPendingTasksCount(queue string) (int64, error)
+	GetDelayedTasksCount() (int64, error)
 	GetPendingTasks(queue string) ([]*tasks.Signature, error)
 	GetDelayedTasks() ([]*tasks.Signature, error)
 	AdjustRoutingKey(s *tasks.Signature)
