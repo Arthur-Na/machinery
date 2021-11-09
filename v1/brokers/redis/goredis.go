@@ -143,22 +143,25 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProce
 			case <-b.GetStopChan():
 				return
 			case <-pool:
-				task, err := b.nextDelayedTask(b.redisDelayedTasksKey)
-				if err != nil {
-					continue
-				}
+				go func() {
+					task, err := b.nextDelayedTask(b.redisDelayedTasksKey)
+					if err != nil {
+						pool <- struct{}{}
+						return
+					}
 
-				signature := new(tasks.Signature)
-				decoder := json.NewDecoder(bytes.NewReader(task))
-				decoder.UseNumber()
-				if err := decoder.Decode(signature); err != nil {
-					log.ERROR.Print(errs.NewErrCouldNotUnmarshalTaskSignature(task, err))
-				}
+					signature := new(tasks.Signature)
+					decoder := json.NewDecoder(bytes.NewReader(task))
+					decoder.UseNumber()
+					if err := decoder.Decode(signature); err != nil {
+						log.ERROR.Print(errs.NewErrCouldNotUnmarshalTaskSignature(task, err))
+					}
 
-				if err := b.Publish(context.Background(), signature); err != nil {
-					log.ERROR.Print(err)
-				}
-				pool <- struct{}{}
+					if err := b.Publish(context.Background(), signature); err != nil {
+						log.ERROR.Print(err)
+					}
+					pool <- struct{}{}
+				}()
 			}
 		}
 	}()
