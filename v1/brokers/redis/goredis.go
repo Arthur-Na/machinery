@@ -142,7 +142,7 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProce
 			// A way to stop this goroutine from b.StopConsuming
 			case <-b.GetStopChan():
 				return
-			default:
+			case <-pool:
 				task, err := b.nextDelayedTask(b.redisDelayedTasksKey)
 				if err != nil {
 					continue
@@ -158,6 +158,7 @@ func (b *BrokerGR) StartConsuming(consumerTag string, concurrency int, taskProce
 				if err := b.Publish(context.Background(), signature); err != nil {
 					log.ERROR.Print(err)
 				}
+				pool <- struct{}{}
 			}
 		}
 	}()
